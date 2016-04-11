@@ -7,8 +7,15 @@
 
 %%
 
-[0-9]+ { return NUM;}
-[a-z]  { return ID;}
+[0-9]+ {
+         yylval.num
+         =
+         atoi(yytext);
+         return NUM;
+       }
+[a-z]  { yylval.id = *yytext;
+         return ID;
+       }
 "+"    { return ADD;}
 "-"    { return SUB;}
 "*"    { return MUL;}

@@ -1,11 +1,20 @@
 
 %{
 #include <stdio.h>
+#include <stdlib.h>
 int yylex();
+extern char* yytext;
 void yyerror( const char* msg)
 {
-  printf("ERROR: %s\n", msg);
+  printf("ERROR: %s %s\n", msg, yytext);
 }
+
+struct symTableNode
+{
+  int val;
+};
+
+struct symTableNode* symTable[26];
 
 %}
 
@@ -23,6 +32,8 @@ void yyerror( const char* msg)
 %token ASSIGN
 %token LPAREN
 %token RPAREN
+
+%type <num> expr
 
 %left SUB
 %left ADD
@@ -47,6 +58,7 @@ stmtlist: stmt
 stmt: expr
       {
         printf("expr\n");
+        printf("%d\n",$1);
       }
     | assignstmt
       {
@@ -56,6 +68,7 @@ stmt: expr
 expr: expr ADD expr
       {
         printf("expr ADD expr\n");
+        $$ = $1 + $3;
       }
     | expr SUB expr
       {
@@ -72,20 +85,59 @@ expr: expr ADD expr
     | NUM
       {
         printf("NUM\n");
+        $$ = $1;
       }
     | ID
       {
         printf("ID\n");
+        if( symTable[$1-'a']!=NULL)
+        {
+          $$ = symTable[$1-'a']->val;
+        }
+        else
+        {
+          printf("Error: "
+          "'%c' undeclared.\n",$1);
+          exit(1);
+        }
       }
 assignstmt: ID ASSIGN expr
       {
         printf("ID ASSIGN expr\n");
+        if( symTable[$1-'a']==NULL)
+        {
+          symTable[$1-'a']
+          =
+          (struct symTableNode*)malloc(sizeof(struct symTableNode));
+        }
+        symTable[$1-'a']->val = $3;
       }
 
 %%
 
 int main()
 {
+  int i;
+  for( i=0; i<26; i++)
+  {
+    symTable[i] = NULL;
+  }
+
   yyparse();
+
+  for( i=0; i<26; i++)
+  {
+    if( symTable[i]!=NULL)
+    {
+      printf("symTable[%2d] = %d\n"
+            ,i
+            ,symTable[i]->val);
+    }
+    else
+    {
+      printf("symTable[%2d] = NULL\n",i);
+    }
+  }
+
   return 0;
 }
