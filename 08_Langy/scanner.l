@@ -7,21 +7,24 @@
 
 %%
 
-[0-9]+ { return NUM;}
-"+"    { return ADD;}
-"*"    { return MUL;}
-"-"    { return SUB;}
-"%"    { return MOD;}
-"="    { return ASSIGN;}
-"=="   { return COMPARE;}
-"<"    { return LT;}
-"("    { return LPAREN;}
-")"    { return RPAREN;}
-"{"    { return LBRACE;}
-"}"    { return RBRACE;}
-if     { return IF;}
-while  { return WHILE;}
-[a-z]  { return ID;}
+[0-9]+   { return NUM;}
+"+"      { return ADD;}
+"*"      { return MUL;}
+"-"      { return SUB;}
+"%"      { return MOD;}
+"="      { return ASSIGN;}
+"=="     { return COMPARE;}
+"<"      { return LT;}
+"("      { return LPAREN;}
+")"      { return RPAREN;}
+"{"      { return LBRACE;}
+"}"      { return RBRACE;}
+if       { return IF;}
+while    { return WHILE;}
+input    { return INPUT;}
+[a-z]    { return ID;}
+
+[ \n]+   {}
 
 %%
 
