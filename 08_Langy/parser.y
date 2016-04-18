@@ -14,20 +14,34 @@ void yyerror( const char* msg)
 
 struct exprnode
 {
-  enum { TODO1} type;
+  enum { NUM_t, ID_t, OP_t} type;
   union
   {
+    int num;
+    char id;
+    enum { LT_t, COMPARE_t} op;
   } val;
+  struct exprnode* left;
   struct exprnode* next;
 };
 
 struct stmtnode
 {
-  enum { TODO2} type;
+  enum
+  {
+    INPUT_t
+  , OUTPUT_t
+  , ASSIGN_t
+  , WHILE_t
+  , IF_t
+  } type;
   struct exprnode* expr;
   struct stmtnode* body;
   struct stmtnode* next;
 };
+
+void genCode( struct stmtnode* program);
+void genStatementList( struct stmtnode* stmtlist);
 
 struct stmtnode program;
 
@@ -42,7 +56,7 @@ struct stmtnode program;
 };
 
 %token NUM
-%token ID
+%token <id> ID
 %token ADD
 %token MUL
 %token SUB
@@ -112,6 +126,16 @@ whilestmt: WHILE LPAREN expr RPAREN
 inputstmt: INPUT ID
 {
   $$ = (struct stmtnode*)malloc(sizeof(struct stmtnode));
+  $$->type = INPUT_t;
+
+  $$->expr = (struct exprnode*)malloc(sizeof(struct exprnode));
+  $$->expr->type = NUM_t;
+  $$->expr->val.id = $2;
+  $$->expr->left = NULL;
+  $$->expr->next = NULL;
+
+  $$->body = NULL;
+  $$->next = NULL;
 }
 
 %%
@@ -119,5 +143,30 @@ inputstmt: INPUT ID
 int main()
 {
   yyparse();
+
+  genCode( program.body);
+
   return 0;
+}
+
+void genCode( struct stmtnode* program)
+{
+  genStatementList( program);
+}
+
+void genStatementList( struct stmtnode* stmtlist)
+{
+  struct stmtnode* curstmt = stmtlist;
+  while( curstmt!=NULL)
+  {
+    switch( curstmt->type)
+    {
+      case INPUT_t:
+        printf("input %c\n",curstmt->expr->val.id);
+        break;
+      default:
+        break;
+    }
+    curstmt = curstmt->next;
+  }
 }

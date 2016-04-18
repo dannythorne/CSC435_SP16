@@ -22,7 +22,10 @@
 if       { return IF;}
 while    { return WHILE;}
 input    { return INPUT;}
-[a-z]    { return ID;}
+[a-z]    {
+           yylval.id = *yytext;
+           return ID;
+         }
 
 [ \n]+   {}
 
