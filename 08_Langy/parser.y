@@ -48,13 +48,17 @@ struct symTableEntry
 
 struct symTableEntry** symTable;
 
+struct stmtnode program;
+
 void genCode( struct stmtnode* program);
 int genLocalVars( FILE* fout
                 , struct symTableEntry** symTable);
 void genStatementList( FILE* fout
                      , struct stmtnode* stmtlist);
 
-struct stmtnode program;
+void freeStmtNode( struct stmtnode** stmt);
+void freeExprNode( struct exprnode** expr);
+void freeSymTable( struct symTableEntry*** symTable);
 
 %}
 
@@ -172,6 +176,9 @@ int main()
   yyparse();
 
   genCode( program.body);
+  
+  freeStmtNode( &program.body);
+  freeSymTable( &symTable);
 
   return 0;
 }
@@ -227,5 +234,49 @@ void genStatementList( FILE* fout
         break;
     }
     curstmt = curstmt->next;
+  }
+}
+
+
+void freeStmtNode( struct stmtnode** stmt)
+{
+  if( stmt != NULL && (*stmt) != NULL)
+  {
+    freeStmtNode( &(*stmt)->next);
+    freeStmtNode( &(*stmt)->body);
+    freeExprNode( &(*stmt)->expr);
+    
+    free(*stmt);
+    *stmt = NULL;
+  }
+}
+
+void freeExprNode( struct exprnode** expr)
+{
+  if( expr != NULL && (*expr) != NULL)
+  {
+    freeExprNode( &(*expr)->next);
+    freeExprNode( &(*expr)->left);
+    
+    free(*expr);
+    *expr = NULL;
+  }
+}
+
+void freeSymTable( struct symTableEntry*** symTable)
+{
+  if( symTable != NULL && (*symTable) != NULL)
+  {
+    for( int i=0; i<26; ++i)
+    {
+      if( (*symTable)[i] != NULL)
+      {
+        free((*symTable)[i]);
+        (*symTable)[i] = NULL;
+      }
+    }
+
+    free(*symTable);
+    *symTable = NULL;
   }
 }
