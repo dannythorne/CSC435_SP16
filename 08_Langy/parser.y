@@ -40,8 +40,19 @@ struct stmtnode
   struct stmtnode* next;
 };
 
+struct symTableEntry
+{
+  char hasVal; // set to 0 or 1
+  int val;
+};
+
+struct symTableEntry** symTable;
+
 void genCode( struct stmtnode* program);
-void genStatementList( struct stmtnode* stmtlist);
+int genLocalVars( FILE* fout
+                , struct symTableEntry** symTable);
+void genStatementList( FILE* fout
+                     , struct stmtnode* stmtlist);
 
 struct stmtnode program;
 
@@ -136,12 +147,28 @@ inputstmt: INPUT ID
 
   $$->body = NULL;
   $$->next = NULL;
+
+  if( symTable[$2-'a']==NULL)
+  {
+    symTable[$2-'a'] = (struct symTableEntry*)malloc(
+                 sizeof(struct symTableEntry)       );
+  }
+  symTable[$2-'a']->hasVal = 0;
 }
 
 %%
 
 int main()
 {
+  symTable = (struct symTableEntry**)malloc(
+    26*sizeof(struct symTableEntry*)       );
+
+  int i;
+  for( i=0; i<26; i++)
+  {
+    symTable[i] = NULL;
+  }
+
   yyparse();
 
   genCode( program.body);
@@ -151,10 +178,39 @@ int main()
 
 void genCode( struct stmtnode* program)
 {
-  genStatementList( program);
+  FILE* fout;
+  fout = fopen("a.pep","w+");
+
+  fprintf(fout, "br main\n");
+  int numVars = genLocalVars( fout, symTable);
+  fprintf(fout, "main: nop0\n");
+  fprintf(fout, "subsp %d, i\n", 2*numVars);
+  genStatementList( fout, program);
+  fprintf(fout, "addsp %d, i\n", 2*numVars);
+  fprintf(fout, "stop\n");
+  fprintf(fout, ".end\n");
+
+  fclose(fout);
 }
 
-void genStatementList( struct stmtnode* stmtlist)
+int genLocalVars( FILE* fout
+                , struct symTableEntry** symTable)
+{
+  int i;
+  int n = 0;
+  for( i=0; i<26; i++)
+  {
+    if( symTable[i]!=NULL)
+    {
+      fprintf(fout,"%c: .equate %d\n",i+'a',2*n);
+      n++;
+    }
+  }
+  return n;
+}
+
+void genStatementList( FILE* fout
+                     , struct stmtnode* stmtlist)
 {
   struct stmtnode* curstmt = stmtlist;
   while( curstmt!=NULL)
@@ -163,6 +219,9 @@ void genStatementList( struct stmtnode* stmtlist)
     {
       case INPUT_t:
         printf("input %c\n",curstmt->expr->val.id);
+        fprintf( fout
+               , "deci %c, s\n"
+               , curstmt->expr->val.id);
         break;
       default:
         break;
