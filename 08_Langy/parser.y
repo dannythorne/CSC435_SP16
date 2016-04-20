@@ -240,7 +240,7 @@ void genStatementList( FILE* fout
 
 void freeStmtNode( struct stmtnode** stmt)
 {
-  if( (*stmt) != NULL)
+  if( stmt != NULL && (*stmt) != NULL)
   {
     freeStmtNode( &(*stmt)->next);
     freeStmtNode( &(*stmt)->body);
@@ -253,7 +253,7 @@ void freeStmtNode( struct stmtnode** stmt)
 
 void freeExprNode( struct exprnode** expr)
 {
-  if( (*expr) != NULL)
+  if( expr != NULL && (*expr) != NULL)
   {
     freeExprNode( &(*expr)->next);
     freeExprNode( &(*expr)->left);
@@ -265,7 +265,7 @@ void freeExprNode( struct exprnode** expr)
 
 void freeSymTable( struct symTableEntry*** symTable)
 {
-  if( (*symTable) != NULL)
+  if( symTable != NULL && (*symTable) != NULL)
   {
     for( int i=0; i<26; ++i)
     {
