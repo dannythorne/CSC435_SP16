@@ -55,10 +55,10 @@ int genLocalVars( FILE* fout
                 , struct symTableEntry** symTable);
 void genStatementList( FILE* fout
                      , struct stmtnode* stmtlist);
-                     
-void freeStmtNode( struct stmtnode* stmt);
-void freeExprNode( struct exprnode* expr);
-void freeSymTable( struct symTableEntry** symTable);
+
+void freeStmtNode( struct stmtnode** stmt);
+void freeExprNode( struct exprnode** expr);
+void freeSymTable( struct symTableEntry*** symTable);
 
 %}
 
@@ -177,8 +177,8 @@ int main()
 
   genCode( program.body);
   
-  freeStmtNode( program.body);
-  freeSymTable( symTable);
+  freeStmtNode( &program.body);
+  freeSymTable( &symTable);
 
   return 0;
 }
@@ -238,45 +238,45 @@ void genStatementList( FILE* fout
 }
 
 
-void freeStmtNode( struct stmtnode* stmt)
+void freeStmtNode( struct stmtnode** stmt)
 {
-  if( stmt != NULL)
+  if( (*stmt) != NULL)
   {
-    freeStmtNode( stmt->next);
-    freeStmtNode( stmt->body);
-    freeExprNode( stmt->expr);
+    freeStmtNode( &(*stmt)->next);
+    freeStmtNode( &(*stmt)->body);
+    freeExprNode( &(*stmt)->expr);
     
-    free(stmt);
-    stmt = NULL;
+    free(*stmt);
+    *stmt = NULL;
   }
 }
 
-void freeExprNode( struct exprnode* expr)
+void freeExprNode( struct exprnode** expr)
 {
-  if( expr != NULL)
+  if( (*expr) != NULL)
   {
-    freeExprNode( expr->next);
-    freeExprNode( expr->left);
+    freeExprNode( &(*expr)->next);
+    freeExprNode( &(*expr)->left);
     
-    free(expr);
-    expr = NULL;
+    free(*expr);
+    *expr = NULL;
   }
 }
 
-void freeSymTable( struct symTableEntry** symTable)
+void freeSymTable( struct symTableEntry*** symTable)
 {
-  if( symTable != NULL)
+  if( (*symTable) != NULL)
   {
     for( int i=0; i<26; ++i)
     {
-      if( symTable[i] != NULL)
+      if( (*symTable)[i] != NULL)
       {
-        free(symTable[i]);
-        symTable[i] = NULL;
+        free((*symTable)[i]);
+        (*symTable)[i] = NULL;
       }
     }
 
-    free(symTable);
-    symTable = NULL;
+    free(*symTable);
+    *symTable = NULL;
   }
 }
