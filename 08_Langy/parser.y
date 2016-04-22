@@ -40,6 +40,12 @@ struct stmtnode
   struct stmtnode* next;
 };
 
+struct stmtlist
+{
+  struct stmtnode* head;
+  struct stmtnode* tail;
+};
+
 struct symTableEntry
 {
   char hasVal; // set to 0 or 1
@@ -68,6 +74,7 @@ void freeSymTable( struct symTableEntry*** symTable);
   char id;
   struct stmtnode* stmt;
   struct exprnode* expr;
+  struct stmtlist* stmtlist;
 };
 
 %token NUM
@@ -91,7 +98,7 @@ void freeSymTable( struct symTableEntry*** symTable);
 %left ADD SUB
 %left MUL MOD
 
-%type <stmt> stmtlist
+%type <stmtlist> stmtlist
 %type <stmt> stmt
 %type <stmt> inputstmt
 
@@ -99,16 +106,20 @@ void freeSymTable( struct symTableEntry*** symTable);
 
 program: stmtlist
 {
-  program.body = $1;
+  program.body = $1->head;
 }
 
 stmtlist:
   stmt
 {
-  $$ = $1;
+  $$ = (struct stmtlist*)malloc(sizeof(struct stmtlist));
+  $$->head = $$->tail = $1;
 }
 | stmtlist stmt
 {
+  $$ = $1;
+  $$->tail->next = $2;
+  $$->tail = $2;
 }
 
 stmt:
@@ -176,7 +187,7 @@ int main()
   yyparse();
 
   genCode( program.body);
-  
+
   freeStmtNode( &program.body);
   freeSymTable( &symTable);
 
@@ -231,6 +242,7 @@ void genStatementList( FILE* fout
                , curstmt->expr->val.id);
         break;
       default:
+        printf("%s %d -- Unhandled case.", __FILE__, __LINE__);
         break;
     }
     curstmt = curstmt->next;
@@ -245,7 +257,7 @@ void freeStmtNode( struct stmtnode** stmt)
     freeStmtNode( &(*stmt)->next);
     freeStmtNode( &(*stmt)->body);
     freeExprNode( &(*stmt)->expr);
-    
+
     free(*stmt);
     *stmt = NULL;
   }
@@ -257,7 +269,7 @@ void freeExprNode( struct exprnode** expr)
   {
     freeExprNode( &(*expr)->next);
     freeExprNode( &(*expr)->left);
-    
+
     free(*expr);
     *expr = NULL;
   }
