@@ -2,3 +2,4 @@ input n
 input m
 input a
 input b
+x = 0

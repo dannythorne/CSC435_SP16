@@ -101,6 +101,7 @@ void freeSymTable( struct symTableEntry*** symTable);
 %type <stmtlist> stmtlist
 %type <stmt> stmt
 %type <stmt> inputstmt
+%type <stmt> assignstmt
 
 %%
 
@@ -114,16 +115,21 @@ stmtlist:
 {
   $$ = (struct stmtlist*)malloc(sizeof(struct stmtlist));
   $$->head = $$->tail = $1;
+  printf("new stmt node: %p\n",$1);
 }
 | stmtlist stmt
 {
   $$ = $1;
+  printf("new stmt node: %p\n",$2);
   $$->tail->next = $2;
   $$->tail = $2;
 }
 
 stmt:
   assignstmt
+{
+  $$ = $1;
+}
 | ifstmt
 | whilestmt
 | inputstmt
@@ -142,6 +148,11 @@ expr: expr ADD expr
     | ID
 
 assignstmt: ID ASSIGN expr
+{
+  $$ = (struct stmtnode*)malloc(sizeof(struct stmtnode));
+  $$->type = ASSIGN_t;
+  $$->next = NULL;
+}
 
 ifstmt: IF LPAREN expr RPAREN
            LBRACE stmtlist RBRACE
@@ -155,7 +166,7 @@ inputstmt: INPUT ID
   $$->type = INPUT_t;
 
   $$->expr = (struct exprnode*)malloc(sizeof(struct exprnode));
-  $$->expr->type = NUM_t;
+  $$->expr->type = ID_t;
   $$->expr->val.id = $2;
   $$->expr->left = NULL;
   $$->expr->next = NULL;
@@ -233,6 +244,7 @@ void genStatementList( FILE* fout
   struct stmtnode* curstmt = stmtlist;
   while( curstmt!=NULL)
   {
+    printf("bing\n");
     switch( curstmt->type)
     {
       case INPUT_t:
@@ -240,6 +252,9 @@ void genStatementList( FILE* fout
         fprintf( fout
                , "deci %c, s\n"
                , curstmt->expr->val.id);
+        break;
+      case ASSIGN_t:
+        printf("ASSIGN_t pending\n");
         break;
       default:
         printf("%s %d -- Unhandled case.", __FILE__, __LINE__);
