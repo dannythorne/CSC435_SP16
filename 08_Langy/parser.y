@@ -59,6 +59,8 @@ struct stmtnode program;
 void genCode( struct stmtnode* program);
 int genLocalVars( FILE* fout
                 , struct symTableEntry** symTable);
+void genAssignStmt(FILE* fout
+                  , struct stmtnode* assignStmt);
 void genStatementList( FILE* fout
                      , struct stmtnode* stmtlist);
 
@@ -77,7 +79,7 @@ void freeSymTable( struct symTableEntry*** symTable);
   struct stmtlist* stmtlist;
 };
 
-%token NUM
+%token <num> NUM
 %token <id> ID
 %token ADD
 %token MUL
@@ -98,6 +100,7 @@ void freeSymTable( struct symTableEntry*** symTable);
 %left ADD SUB
 %left MUL MOD
 
+%type <expr> expr
 %type <stmtlist> stmtlist
 %type <stmt> stmt
 %type <stmt> inputstmt
@@ -144,14 +147,31 @@ expr: expr ADD expr
     | expr COMPARE expr
     | expr LT expr
     | LPAREN expr RPAREN
-    | NUM
-    | ID
+    | NUM {
+      $$ = (struct exprnode*)malloc(sizeof(struct exprnode));
+      $$->val.num = $1;
+      $$->type = NUM_t;
+      $$->next = NULL;
+    }
+    | ID {
+      $$ = (struct exprnode*)malloc(sizeof(struct exprnode));
+      $$->val.id = $1;
+      $$->type = ID_t;
+      $$->next = NULL;
+    }
 
 assignstmt: ID ASSIGN expr
 {
   $$ = (struct stmtnode*)malloc(sizeof(struct stmtnode));
   $$->type = ASSIGN_t;
   $$->next = NULL;
+
+  // Get LHS of ASSIGN
+  $$->expr = (struct exprnode*)malloc(sizeof(struct exprnode));
+  $$->expr->val.id = $1;
+
+  // Get RHS of ASSIGN
+  $$->expr->next = $3;
 }
 
 ifstmt: IF LPAREN expr RPAREN
@@ -254,7 +274,8 @@ void genStatementList( FILE* fout
                , curstmt->expr->val.id);
         break;
       case ASSIGN_t:
-        printf("ASSIGN_t pending\n");
+        //printf("ASSIGN_t pending\n");
+        genAssignStmt(fout, curstmt);
         break;
       default:
         printf("%s %d -- Unhandled case.", __FILE__, __LINE__);
@@ -262,6 +283,40 @@ void genStatementList( FILE* fout
     }
     curstmt = curstmt->next;
   }
+}
+
+void genAssignStmt(FILE* fout, struct stmtnode* assignStmt)
+{
+  if( assignStmt->expr->next->type == ID_t)
+  {
+    char lhsId = assignStmt->expr->val.id;
+    char rhsId = assignStmt->expr->next->val.id;
+    if( symTable[rhsId-'a'] == NULL)
+    {
+      printf("Unitialized variable %c used to assign %c\n", rhsId, lhsId);
+      return; // TODO: instead cleanup and exit program.
+    }
+  }
+  switch( assignStmt->expr->next->type)
+  {
+    case NUM_t:
+      fprintf( fout
+              , "LDA %d, i\nSTA %c, s\n"
+              , assignStmt->expr->next->val.num
+              , assignStmt->expr->val.id);
+      break;
+    case ID_t:
+      fprintf( fout
+              , "LDA %c, s\nSTA %c, s\n"
+              , assignStmt->expr->next->val.id
+              , assignStmt->expr->val.id);
+      break;
+    default:
+        printf("%s %d -- Unhandled case.", __FILE__, __LINE__);
+      break;
+
+  }
+  return;
 }
 
 

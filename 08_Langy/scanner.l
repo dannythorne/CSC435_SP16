@@ -7,7 +7,10 @@
 
 %%
 
-[0-9]+   { return NUM;}
+[0-9]+   {
+  yylval.num = atoi(yytext);
+  return NUM;
+}
 "+"      { return ADD;}
 "*"      { return MUL;}
 "-"      { return SUB;}
@@ -30,4 +33,3 @@ input    { return INPUT;}
 [ \n]+   {}
 
 %%
-

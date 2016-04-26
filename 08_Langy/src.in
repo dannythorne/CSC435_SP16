@@ -2,4 +2,6 @@ input n
 input m
 input a
 input b
-x = 0
+input e
+x = e
+x = 2
