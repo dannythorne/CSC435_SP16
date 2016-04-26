@@ -8,3 +8,9 @@ parser.tab.c parser.tab.h: parser.y
 lex.yy.c: scanner.l parser.tab.h
 	flex scanner.l
 
+run:
+	clear
+	./a.out < src.in
+	cat a.pep
+clean:
+	rm lex.yy.c parser.tab.* a.out a.pep
